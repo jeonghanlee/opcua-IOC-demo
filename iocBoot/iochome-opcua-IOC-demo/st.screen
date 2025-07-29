@@ -1,0 +1,4 @@
+#!/bin/sh
+# cd "/vxboot/opcua-IOC-demo/boot/iocBoot/iochome-opcua-IOC-demo"
+exec ./st.cmd
+

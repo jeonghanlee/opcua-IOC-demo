@@ -1,0 +1,32 @@
+####################################################################################################
+############ START of opcua-IOC-demo.iocsh ##############################################################
+#-- >> Mandatory
+#-- SESS           : SESSION NAME
+#-- SUBS           : SUBSCRIPTION NAME
+#-- INET           : OPCUA SERVER INET
+#-- P              : Database PREFIX P
+#-- R              : Database PREFIX R
+#-- DATABASE_TOP   : Where the DATABASE is
+#-- >> Optional
+#-- PORT           : [Default] 48020 - OPCUA SERVER PORT,
+#-- DEBUG          : [Default]     0 - SESSION initial level of debuggging
+#-- AUTOCONNECT    : [Default]     y - Automatically connect/reconnect to server
+#--                  True : YyTt      False : NnFf
+#-- BATCHNODES     : [Default]  1000 - The maximum number of operations used in a Service call.
+#--                  nMaxOperationsPerServiceCall in UA SDK / OPEN64521?
+#--                  Currently, 1000 is the maximum value for Simens PLC
+#-- SUBSTIME       : [Default]   100 - SUBSCRIPTION Interval (ms)
+#-- SUBSPRIO       : [Default]     0 - SUBSCRIPTION Priority [0..255] [Lowest..Highest]
+#-- SUBSDEBUG      : [Default]     0 - SUBSCRIPTION DEBUG (0:off, positive number:on)
+#-- R              : Database next prefix, Default : not defined
+#--#################################################################################################
+
+opcuaCreateSession "$(SESS)" "opc.tcp://$(INET):$(PORT=48020)" "$(DEBUG=0)" "$(AUTOCONNECT=y)"
+
+opcuaSetOption "$(SESS)" "batch-nodes" "$(BATCHNODES=1000)"
+
+opcuaCreateSubscription "$(SUBS)" "$(SESS)" "$(SUBSTIME=100)" "$(SUBPRIO=0)" "$(SUBSDEBUG=0)"
+
+dbLoadRecords("$(DATABASE_TOP)/opcuaServer-demo.db", "PREF=$(P),SESSION=$(SESS),SUBSCRIPT=$(SUBS)")
+############ END of opcua-IOC-demo.iocsh ################################################################
+####################################################################################################
