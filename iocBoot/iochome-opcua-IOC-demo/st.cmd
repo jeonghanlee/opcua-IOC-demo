@@ -32,7 +32,7 @@ epicsEnvSet("IOCSH_LOCAL_TOP",       "$(TOP)/iocsh")
 epicsEnvSet("ENGINEER",  "jeonglee")
 epicsEnvSet("LOCATION",  "SoftIOC")
 epicsEnvSet("WIKI", "")
-#-- 
+#--
 epicsEnvSet("IOCNAME", "home-opcua-IOC-demo")
 epicsEnvSet("IOC", "iochome-opcua-IOC-demo")
 #--
@@ -40,16 +40,18 @@ epicsEnvSet("PRE", "AAAA:")
 epicsEnvSet("REC", "BBBB:")
 
 dbLoadDatabase "dbd/opcua-IOC-demo.dbd"
-opcuaiochome-opcua-IOC-demodemo_registerRecordDeviceDriver pdbbase
+opcua_IOC_demo_registerRecordDeviceDriver pdbbase
 
 #--
-#-- The following termination defintion should be in st.cmd or .iocsh. 
+#-- The following termination defintion should be in st.cmd or .iocsh.
 #-- Mostly, it should be .iocsh file. Please don't use them within .proto file
 #--
 #-- <0x0d> \r
 #-- <0x0a> \n
 #-- asynOctetSetInputEos($(PORT), 0, "\r")
 #-- asynOctetSetOutputEos($(PORT), 0, "\r")
+
+
 
 #--
 #-- iocshLoad("$(IOCSH_TOP)/als_default.iocsh")
@@ -66,10 +68,36 @@ opcuaiochome-opcua-IOC-demodemo_registerRecordDeviceDriver pdbbase
 
 cd "${TOP}/iocBoot/${IOC}"
 
-#--epicsEnvSet("PORT1",      "AABBCCDD")
-#--epicsEnvSet("PORT1_IP",   "xxx.xxx.xxx.xxx")
-#--epicsEnvSet("PORT1_PORT", "xxxx")
-#--iocshLoad("$(IOCSH_LOCAL_TOP)/opcua-IOC-demo.iocsh", "P=$(PRE),R=$(REC),DATABASE_TOP=$(DB_TOP),PORT=$(PORT1),IPADDR=$(PORT1_IP),IPPORT=$(PORT1_PORT)")
+# Pretty minimal setup: one session with a 200ms subscription on top
+opcuaSession OPC1 opc.tcp://127.0.0.1:48020
+opcuaSubscription SUB1 OPC1 200
+
+# Switch off security
+opcuaOptions OPC1 sec-mode=None
+
+# Set up a namespace mapping
+# (the databases use ns=2, but the demo server >=v1.8 uses ns=3)
+
+opcuaMapNamespace OPC1 2 "http://www.unifiedautomation.com/DemoServer/"
+
+# Load the databases for the UaServerCpp demo server
+# (you can set DEBUG=<n>) to set default values in all TPRO fields)
+
+dbLoadRecords "$(DB_TOP)/UaDemoServer-server.db", "P=OPC:,R=,SESS=OPC1,SUBS=SUB1"
+dbLoadRecords "$(DB_TOP)/Demo.Dynamic.Arrays.db", "P=OPC:,R=DDA:,SESS=OPC1,SUBS=SUB1"
+dbLoadRecords "$(DB_TOP)/Demo.Dynamic.Scalar.db", "P=OPC:,R=DDS:,SESS=OPC1,SUBS=SUB1"
+dbLoadRecords "$(DB_TOP)/Demo.Static.Arrays.db", "P=OPC:,R=DSA:,SESS=OPC1,SUBS=SUB1"
+dbLoadRecords "$(DB_TOP)/Demo.Static.Scalar.db", "P=OPC:,R=DSS:,SESS=OPC1,SUBS=SUB1"
+
+dbLoadRecords "$(DB_TOP)/Demo.WorkOrder.db", "P=OPC:,SESS=OPC1,SUBS=SUB1"
+
+# DO NOT LOAD THESE DBs ON EPICS BASE < 7.0     \/  \/  \/     EPICS 7 ONLY
+# int64 and long string records need EPICS 7
+dbLoadRecords "$(DB_TOP)/Demo.Dynamic.ScalarE7.db", "P=OPC:,R=DDS:,SESS=OPC1,SUBS=SUB1"
+dbLoadRecords "$(DB_TOP)/Demo.Dynamic.ArraysE7.db", "P=OPC:,R=DDA:,SESS=OPC1,SUBS=SUB1"
+dbLoadRecords "$(DB_TOP)/Demo.Static.ScalarE7.db", "P=OPC:,R=DSS:,SESS=OPC1,SUBS=SUB1"
+dbLoadRecords "$(DB_TOP)/Demo.Static.ArraysE7.db", "P=OPC:,R=DSA:,SESS=OPC1,SUBS=SUB1"
+
 
 #>>>>>>>>>>>>>
 iocInit
